@@ -12,8 +12,25 @@
         <h1>MiniRAFT</h1>
         <p id="status">Connecting...</p>
       </header>
+      <section class="auth-card" id="auth-form-wrap">
+        <form id="auth-form" class="auth-form">
+          <label>
+            User ID
+            <input id="user-id" name="userId" placeholder="alice" autocomplete="nickname" required />
+          </label>
+          <label>
+            Board ID
+            <input id="board-id" name="boardId" placeholder="default" autocomplete="off" />
+          </label>
+          <button type="submit">Enter board</button>
+          <p class="error" id="auth-error" aria-live="polite"></p>
+        </form>
+      </section>
       <section class="canvas-wrap">
-        <canvas id="board" width="1200" height="700"></canvas>
+        <div id="board-panel">
+          <p class="hint">Draw on the canvas. The first commit is broadcast through the gateway after quorum.</p>
+          <canvas id="board" width="1200" height="700"></canvas>
+        </div>
       </section>
     </main>
     <script src="/main.js"></script>

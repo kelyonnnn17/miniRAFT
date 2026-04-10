@@ -38,13 +38,29 @@ docker compose up --build
 http://localhost:3000
 ```
 
-4. Replica status endpoints:
+4. Authenticate through the browser form with a user name and board id, then draw on the canvas.
+
+The browser uses `POST /auth/token` to get a short-lived token, then opens the WebSocket with `?token=...`.
+
+5. For manual API usage, request a token from:
+
+```text
+POST http://localhost:8080/auth/token
+```
+
+Body example:
+
+```json
+{ "userId": "alice", "boardId": "default", "role": "editor" }
+```
+
+6. Replica status endpoints:
 
 - `http://localhost:5001/status`
 - `http://localhost:5002/status`
 - `http://localhost:5003/status`
 
-5. Gateway status:
+7. Gateway status:
 
 - `http://localhost:8080/status`
 
@@ -72,6 +88,10 @@ leader failover, gateway stroke broadcast, and convergence after restart.
 - Gateway:
 	- `PORT`
 	- `REPLICAS`
+	- `MINIRAFT_AUTH_SECRET`
+	- `MINIRAFT_TOKEN_TTL_SECONDS`
+	- `MINIRAFT_RATE_LIMIT_MAX_REQUESTS`
+	- `MINIRAFT_RATE_LIMIT_WINDOW_MS`
 
 ## Notes
 

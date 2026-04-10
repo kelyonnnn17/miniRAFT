@@ -44,6 +44,16 @@ async function fetchJson(url, options = {}) {
   };
 }
 
+async function issueToken(gatewayPort, userId, boardId = "default") {
+  const result = await fetchJson(`http://127.0.0.1:${gatewayPort}/auth/token`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ userId, boardId, role: "editor" }),
+  });
+  assert.equal(result.ok, true);
+  return result.body.token;
+}
+
 async function getStatus(address) {
   try {
     const result = await fetchJson(`http://${address}/status`);
@@ -251,16 +261,17 @@ test("cluster failover + catch-up + gateway flow", async (t) => {
     return candidate && candidate !== leaderAddress ? candidate : null;
   }, 12000, "leader failover");
 
-  const ws = new WebSocket(`ws://127.0.0.1:${gatewayPort}`);
-  t.after(() => ws.close());
+  const token = await issueToken(gatewayPort, "integration-user");
+  const authedWs = new WebSocket(`ws://127.0.0.1:${gatewayPort}/?token=${encodeURIComponent(token)}`);
+  t.after(() => authedWs.close());
 
   await waitFor(
-    () => new Promise((resolve) => resolve(ws.readyState === 1 ? true : false)),
+    () => new Promise((resolve) => resolve(authedWs.readyState === 1 ? true : false)),
     6000,
     "gateway websocket connection",
   );
 
-  ws.send(
+  authedWs.send(
     JSON.stringify({
       type: "stroke",
       stroke: {
@@ -273,7 +284,7 @@ test("cluster failover + catch-up + gateway flow", async (t) => {
   );
 
   const broadcast = await waitForWebSocketMessage(
-    ws,
+    authedWs,
     (msg) => msg.type === "stroke" && msg.entry?.committed === true,
     12000,
   );
