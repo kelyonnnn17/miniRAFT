@@ -1,0 +1,16 @@
+{
+  "name": "miniraft",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "workspaces": [
+    "services/*",
+    "shared"
+  ],
+  "scripts": {
+    "dev:replica": "npm run dev -w @miniraft/replica",
+    "dev:gateway": "npm run dev -w @miniraft/gateway",
+    "dev:frontend": "npm run dev -w @miniraft/frontend",
+    "test:integration": "node --test tests/integration/*.test.js"
+  }
+}

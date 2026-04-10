@@ -1,0 +1,122 @@
+services:
+  replica1:
+    build:
+      context: .
+      dockerfile: services/replica/Dockerfile
+    environment:
+      PORT: 5001
+      NODE_ID: replica-1
+      ADVERTISE_ADDR: replica1:5001
+      PEERS: replica2:5002,replica3:5003
+      DATA_DIR: /data
+    ports:
+      - "5001:5001"
+    volumes:
+      - ./services/replica/src:/app/services/replica/src
+      - ./shared/src:/app/shared/src
+      - replica1-data:/data
+    command: ["npm", "run", "dev", "-w", "@miniraft/replica"]
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:5001/health"]
+      interval: 5s
+      timeout: 2s
+      retries: 12
+
+  replica2:
+    build:
+      context: .
+      dockerfile: services/replica/Dockerfile
+    environment:
+      PORT: 5002
+      NODE_ID: replica-2
+      ADVERTISE_ADDR: replica2:5002
+      PEERS: replica1:5001,replica3:5003
+      DATA_DIR: /data
+    ports:
+      - "5002:5002"
+    volumes:
+      - ./services/replica/src:/app/services/replica/src
+      - ./shared/src:/app/shared/src
+      - replica2-data:/data
+    command: ["npm", "run", "dev", "-w", "@miniraft/replica"]
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:5002/health"]
+      interval: 5s
+      timeout: 2s
+      retries: 12
+
+  replica3:
+    build:
+      context: .
+      dockerfile: services/replica/Dockerfile
+    environment:
+      PORT: 5003
+      NODE_ID: replica-3
+      ADVERTISE_ADDR: replica3:5003
+      PEERS: replica1:5001,replica2:5002
+      DATA_DIR: /data
+    ports:
+      - "5003:5003"
+    volumes:
+      - ./services/replica/src:/app/services/replica/src
+      - ./shared/src:/app/shared/src
+      - replica3-data:/data
+    command: ["npm", "run", "dev", "-w", "@miniraft/replica"]
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:5003/health"]
+      interval: 5s
+      timeout: 2s
+      retries: 12
+
+  gateway:
+    build:
+      context: .
+      dockerfile: services/gateway/Dockerfile
+    environment:
+      PORT: 8080
+      REPLICAS: replica1:5001,replica2:5002,replica3:5003
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./services/gateway/src:/app/services/gateway/src
+      - ./shared/src:/app/shared/src
+    command: ["npm", "run", "dev", "-w", "@miniraft/gateway"]
+    depends_on:
+      - replica1
+      - replica2
+      - replica3
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8080/health"]
+      interval: 5s
+      timeout: 2s
+      retries: 12
+
+  frontend:
+    build:
+      context: .
+      dockerfile: services/frontend/Dockerfile
+    environment:
+      PORT: 3000
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./services/frontend/src:/app/services/frontend/src
+      - ./services/frontend/public:/app/services/frontend/public
+    command: ["npm", "run", "dev", "-w", "@miniraft/frontend"]
+    depends_on:
+      - gateway
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3000"]
+      interval: 10s
+      timeout: 3s
+      retries: 6
+
+volumes:
+  replica1-data:
+  replica2-data:
+  replica3-data:
