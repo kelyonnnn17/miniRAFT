@@ -8,11 +8,24 @@
   </head>
   <body>
     <main class="shell">
-      <header class="topbar">
-        <h1>MiniRAFT</h1>
-        <p id="status">Connecting...</p>
-      </header>
+      <section class="hero">
+        <div>
+          <p class="eyebrow">Collaborative sketch board</p>
+          <h1>MiniRAFT</h1>
+          <p class="lede">Sign in, pick a board, and draw together with live replicated strokes, monochrome shades, erasing, and instant clearing.</p>
+        </div>
+        <div class="status-card">
+          <span class="status-label">Connection</span>
+          <p id="status">Connecting...</p>
+        </div>
+      </section>
+
       <section class="auth-card" id="auth-form-wrap">
+        <div class="auth-copy">
+          <p class="eyebrow">Get started</p>
+          <h2>Enter a board in one step</h2>
+          <p>Use any user name, pick a board ID, and the gateway will issue a session token for drawing.</p>
+        </div>
         <form id="auth-form" class="auth-form">
           <label>
             User ID
@@ -26,9 +39,34 @@
           <p class="error" id="auth-error" aria-live="polite"></p>
         </form>
       </section>
+
       <section class="canvas-wrap">
-        <div id="board-panel">
-          <p class="hint">Draw on the canvas. The first commit is broadcast through the gateway after quorum.</p>
+        <div id="board-panel" hidden>
+          <div class="board-toolbar" aria-label="Drawing tools">
+            <div class="toolbar-group">
+              <span class="toolbar-label">Mode</span>
+              <button type="button" class="tool-button active" data-tool="pen">Pen</button>
+              <button type="button" class="tool-button" data-tool="eraser">Eraser</button>
+            </div>
+            <div class="toolbar-group color-group">
+              <span class="toolbar-label">Color</span>
+              <button type="button" class="color-swatch active" data-color="#111111" style="--swatch:#111111" aria-label="Black"></button>
+              <button type="button" class="color-swatch" data-color="#444444" style="--swatch:#444444" aria-label="Charcoal"></button>
+              <button type="button" class="color-swatch" data-color="#777777" style="--swatch:#777777" aria-label="Gray"></button>
+              <button type="button" class="color-swatch" data-color="#b5b5b5" style="--swatch:#b5b5b5" aria-label="Silver"></button>
+              <button type="button" class="color-swatch" data-color="#ffffff" style="--swatch:#ffffff" aria-label="White"></button>
+            </div>
+            <label class="color-picker-wrap">
+              <span class="toolbar-label">Hue</span>
+              <input id="custom-color" type="color" value="#111111" aria-label="Choose custom color" />
+            </label>
+            <label class="range-group">
+              <span class="toolbar-label">Brush <strong id="brush-value">3</strong> px</span>
+              <input id="brush-size" type="range" min="1" max="28" value="3" />
+            </label>
+            <button type="button" id="clear-board" class="clear-button">Clear board</button>
+          </div>
+          <p class="hint">Pen and eraser strokes are replicated. Clear board publishes a shared reset for everyone on the board.</p>
           <canvas id="board" width="1200" height="700"></canvas>
         </div>
       </section>

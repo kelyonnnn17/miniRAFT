@@ -4,7 +4,7 @@ import { WebSocketServer } from "ws";
 import { logEvent } from "@miniraft/shared/src/logger.js";
 import { extractBearerToken, issueToken, verifyToken } from "@miniraft/shared/src/auth.js";
 import { consumeRateLimit } from "@miniraft/shared/src/rateLimit.js";
-import { normalizeAuthRequest, normalizeStroke } from "@miniraft/shared/src/validation.js";
+import { normalizeAuthRequest, normalizeDrawingOperation } from "@miniraft/shared/src/validation.js";
 
 const PORT = Number(process.env.PORT || 8080);
 const REPLICAS = (process.env.REPLICAS || "localhost:5001,localhost:5002,localhost:5003")
@@ -18,7 +18,14 @@ app.use((req, res, next) => {
   res.setHeader("x-content-type-options", "nosniff");
   res.setHeader("x-frame-options", "DENY");
   res.setHeader("referrer-policy", "no-referrer");
+  res.setHeader("access-control-allow-origin", "*");
+  res.setHeader("access-control-allow-headers", "content-type, authorization");
+  res.setHeader("access-control-allow-methods", "GET,POST,OPTIONS");
   next();
+});
+
+app.options("*", (_req, res) => {
+  res.sendStatus(204);
 });
 
 let knownLeader = null;
@@ -83,7 +90,7 @@ function getClientIdentityFromRequest(request) {
   return { ok: true, payload: verified.payload };
 }
 
-async function sendStrokeToLeader(stroke, attempt = 0) {
+async function sendOperationToLeader(operation, attempt = 0) {
   const leader = await findLeader();
   if (!leader) {
     return { ok: false, reason: "leader_not_found" };
@@ -92,7 +99,7 @@ async function sendStrokeToLeader(stroke, attempt = 0) {
   const result = await fetchJson(`http://${leader}/client/stroke`, {
     method: "POST",
     headers: { "content-type": "application/json" },
-    body: JSON.stringify({ stroke }),
+    body: JSON.stringify({ operation }),
   });
 
   if (result.ok) {
@@ -101,7 +108,7 @@ async function sendStrokeToLeader(stroke, attempt = 0) {
 
   if (result.status === 409 && attempt < 3) {
     knownLeader = null;
-    return sendStrokeToLeader(stroke, attempt + 1);
+    return sendOperationToLeader(operation, attempt + 1);
   }
 
   return { ok: false, reason: result.body.reason || "append_failed" };
@@ -170,7 +177,7 @@ wss.on("connection", async (ws, request) => {
   ws.on("message", async (rawMessage) => {
     try {
       const message = JSON.parse(rawMessage.toString());
-      if (message.type !== "stroke") {
+      if (message.type !== "stroke" && message.type !== "clear") {
         return;
       }
 
@@ -180,23 +187,23 @@ wss.on("connection", async (ws, request) => {
         return;
       }
 
-      const normalized = normalizeStroke(message.stroke);
+      const normalized = normalizeDrawingOperation(message.operation ?? message.stroke ?? message);
       if (!normalized.ok) {
         ws.send(JSON.stringify({ type: "error", message: normalized.error }));
         return;
       }
 
-      const result = await sendStrokeToLeader({
+      const result = await sendOperationToLeader({
         ...normalized.value,
         userId: identity.sub,
         boardId: identity.boardId,
       });
 
       if (result.ok && result.entry?.committed) {
-        broadcast({ type: "stroke", entry: result.entry });
+        broadcast({ type: "operation", entry: result.entry });
         logEvent({
           service: "gateway",
-          eventType: "stroke_broadcast",
+          eventType: "operation_broadcast",
           index: result.entry.index,
           term: result.entry.term,
           userId: identity.sub,

@@ -274,7 +274,7 @@ test("cluster failover + catch-up + gateway flow", async (t) => {
   authedWs.send(
     JSON.stringify({
       type: "stroke",
-      stroke: {
+      operation: {
         from: { x: 300, y: 310 },
         to: { x: 350, y: 370 },
         color: "#dc2626",
@@ -285,10 +285,10 @@ test("cluster failover + catch-up + gateway flow", async (t) => {
 
   const broadcast = await waitForWebSocketMessage(
     authedWs,
-    (msg) => msg.type === "stroke" && msg.entry?.committed === true,
+    (msg) => msg.type === "operation" && msg.entry?.committed === true,
     12000,
   );
-  assert.equal(broadcast.type, "stroke");
+  assert.equal(broadcast.type, "operation");
 
   const restartedOldLeader = await startReplica({
     port: leaderProcState.port,

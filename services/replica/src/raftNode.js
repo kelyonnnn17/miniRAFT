@@ -292,6 +292,10 @@ export class RaftNode {
   }
 
   async appendClientStroke(stroke) {
+    return this.appendClientOperation(stroke);
+  }
+
+  async appendClientOperation(operation) {
     if (this.state !== NodeState.LEADER) {
       return { ok: false, reason: "not_leader", leaderId: this.leaderId };
     }
@@ -299,7 +303,7 @@ export class RaftNode {
     const entry = {
       index: this.log.length,
       term: this.currentTerm,
-      stroke,
+      operation,
       committed: false,
     };
 

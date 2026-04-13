@@ -6,7 +6,8 @@ Distributed real-time drawing board with a Mini-RAFT consensus cluster.
 
 - 3 replica services with RAFT-lite leader election and log replication
 - Gateway service with WebSocket client fanout and leader forwarding
-- Frontend canvas client rendering snapshots and committed strokes
+- Frontend canvas client rendering snapshots and committed drawing operations
+- Drawing tools for pen, eraser, brush sizing, color selection, and shared clear-board resets
 - Docker Compose setup for 1 gateway + 3 replicas + 1 frontend
 - Follower catch-up path using `/sync-log` on restart or log mismatch
 - Integration test covering election, failover, catch-up, and gateway broadcast
@@ -42,6 +43,8 @@ http://localhost:3000
 
 The browser uses `POST /auth/token` to get a short-lived token, then opens the WebSocket with `?token=...`.
 
+Once authenticated, use the toolbar above the board to switch between pen and eraser, change ink color, adjust brush size, or clear the board for everyone.
+
 5. For manual API usage, request a token from:
 
 ```text
@@ -73,7 +76,7 @@ npm run test:integration
 ```
 
 This test spins up an isolated local cluster and validates leader election, follower reset catch-up,
-leader failover, gateway stroke broadcast, and convergence after restart.
+leader failover, gateway drawing broadcast, and convergence after restart.
 
 ## Key Environment Variables
 
@@ -99,6 +102,10 @@ leader failover, gateway stroke broadcast, and convergence after restart.
 - Gateway broadcasts only committed entries.
 - Replica state is persisted to Docker volumes (`/data/state.json`).
 - `/sync-log` endpoint is used by followers for restarted-node catch-up.
+
+## User Guide
+
+See [docs/user-guide.md](docs/user-guide.md) for a step-by-step walkthrough of login, drawing tools, and board sharing.
 
 ## Documentation
 

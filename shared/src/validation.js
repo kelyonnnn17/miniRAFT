@@ -1,9 +1,16 @@
-export function normalizeStroke(input) {
+export function normalizeDrawingOperation(input) {
   if (!input || typeof input !== "object") {
-    return { ok: false, error: "stroke must be an object" };
+    return { ok: false, error: "operation must be an object" };
   }
 
-  const { from, to, color, width } = input;
+  if (input.type === "clear") {
+    return {
+      ok: true,
+      value: { type: "clear" },
+    };
+  }
+
+  const { from, to, color, width, tool } = input;
   const pointKeys = ["x", "y"];
   for (const point of [from, to]) {
     if (!point || typeof point !== "object") {
@@ -24,15 +31,30 @@ export function normalizeStroke(input) {
     return { ok: false, error: "stroke.width must be a positive number" };
   }
 
+  if (tool !== undefined && !["pen", "eraser"].includes(tool)) {
+    return { ok: false, error: "stroke.tool must be pen or eraser" };
+  }
+
   return {
     ok: true,
     value: {
+      type: "stroke",
+      tool: tool || "pen",
       from: { x: from.x, y: from.y },
       to: { x: to.x, y: to.y },
       color: color || "#111827",
       width: width || 3,
     },
   };
+}
+
+export function normalizeStroke(input) {
+  const normalized = normalizeDrawingOperation(input);
+  if (!normalized.ok || normalized.value.type !== "stroke") {
+    return normalized.ok ? { ok: false, error: "stroke expected" } : normalized;
+  }
+
+  return normalized;
 }
 
 export function normalizeAuthRequest(body) {
