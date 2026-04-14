@@ -73,6 +73,18 @@ app.get("/client/committed-log", (_req, res) => {
   });
 });
 
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   console.log(`Replica ${NODE_ID} listening on ${PORT}`);
 });
+
+function shutdown(signal) {
+  console.log(`Replica ${NODE_ID} shutting down (${signal})`);
+  node.stop();
+  server.close(() => {
+    process.exit(0);
+  });
+  setTimeout(() => process.exit(0), 1500).unref();
+}
+
+process.on("SIGTERM", () => shutdown("SIGTERM"));
+process.on("SIGINT", () => shutdown("SIGINT"));

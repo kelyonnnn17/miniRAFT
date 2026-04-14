@@ -9,9 +9,24 @@
   <body>
     <main class="shell">
       <header class="topbar">
-        <h1>MiniRAFT</h1>
+        <div>
+          <h1>MiniRAFT</h1>
+          <p class="subtitle">Distributed drawing board backed by a RAFT-like stroke log</p>
+        </div>
         <p id="status">Connecting...</p>
       </header>
+
+      <section class="info" aria-label="Cluster status">
+        <div class="info-row">
+          <strong>Cluster</strong>
+          <span id="clusterSummary">Waiting for cluster status…</span>
+        </div>
+        <ul id="replicaList" class="replica-list"></ul>
+        <p class="hint">
+          How it works: your strokes go to the Gateway → current Leader → committed via quorum → broadcast to all clients.
+        </p>
+      </section>
+
       <section class="canvas-wrap">
         <canvas id="board" width="1200" height="700"></canvas>
       </section>

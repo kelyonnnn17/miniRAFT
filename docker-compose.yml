@@ -85,9 +85,12 @@ services:
       - ./shared/src:/app/shared/src
     command: ["npm", "run", "dev", "-w", "@miniraft/gateway"]
     depends_on:
-      - replica1
-      - replica2
-      - replica3
+      replica1:
+        condition: service_healthy
+      replica2:
+        condition: service_healthy
+      replica3:
+        condition: service_healthy
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://localhost:8080/health"]
@@ -108,7 +111,8 @@ services:
       - ./services/frontend/public:/app/services/frontend/public
     command: ["npm", "run", "dev", "-w", "@miniraft/frontend"]
     depends_on:
-      - gateway
+      gateway:
+        condition: service_healthy
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://localhost:3000"]

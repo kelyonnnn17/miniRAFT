@@ -10,6 +10,17 @@ const PORT = Number(process.env.PORT || 3000);
 const app = express();
 app.use(express.static(path.join(__dirname, "..", "public")));
 
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   console.log(`Frontend listening on ${PORT}`);
 });
+
+function shutdown(signal) {
+  console.log(`Frontend shutting down (${signal})`);
+  server.close(() => {
+    process.exit(0);
+  });
+  setTimeout(() => process.exit(0), 1500).unref();
+}
+
+process.on("SIGTERM", () => shutdown("SIGTERM"));
+process.on("SIGINT", () => shutdown("SIGINT"));

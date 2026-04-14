@@ -1,6 +1,8 @@
 const canvas = document.getElementById("board");
 const ctx = canvas.getContext("2d");
 const statusEl = document.getElementById("status");
+const clusterSummaryEl = document.getElementById("clusterSummary");
+const replicaListEl = document.getElementById("replicaList");
 
 let drawing = false;
 let lastPoint = null;
@@ -38,6 +40,22 @@ socket.addEventListener("message", (event) => {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     for (const entry of payload.entries || []) {
       drawStroke(entry.stroke);
+    }
+  }
+  if (payload.type === "cluster") {
+    const leader = payload.leader;
+    const leaderNodeId = payload.leaderNodeId;
+    const term = payload.term;
+    const replicas = Array.isArray(payload.replicas) ? payload.replicas : [];
+
+    const leaderLabel = leaderNodeId ? `${leaderNodeId} (${leader || "unknown"})` : leader || "unknown";
+    clusterSummaryEl.textContent = `Leader: ${leaderLabel} · term: ${term ?? "?"}`;
+
+    replicaListEl.innerHTML = "";
+    for (const r of replicas) {
+      const li = document.createElement("li");
+      li.textContent = `${r.nodeId || "?"} @ ${r.address || "?"} — ${r.state || "?"} (term ${r.currentTerm ?? "?"}, commit ${r.commitIndex ?? "?"}, log ${r.logLength ?? "?"})`;
+      replicaListEl.appendChild(li);
     }
   }
   if (payload.type === "stroke" && payload.entry?.stroke) {

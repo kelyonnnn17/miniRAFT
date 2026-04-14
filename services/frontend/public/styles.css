@@ -34,6 +34,44 @@ body {
   letter-spacing: 0.05em;
 }
 
+.subtitle {
+  margin: 6px 0 0;
+  font-size: 0.95rem;
+  opacity: 0.75;
+}
+
+.info {
+  margin-top: 12px;
+  border-radius: 16px;
+  background: var(--panel);
+  box-shadow: 0 20px 60px rgba(38, 52, 76, 0.14);
+  padding: 12px 14px;
+}
+
+.info-row {
+  display: flex;
+  gap: 10px;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.replica-list {
+  margin: 10px 0 0;
+  padding-left: 18px;
+}
+
+.replica-list li {
+  margin: 4px 0;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-size: 0.92rem;
+}
+
+.hint {
+  margin: 10px 0 0;
+  font-size: 0.92rem;
+  opacity: 0.8;
+}
+
 .canvas-wrap {
   margin-top: 12px;
   border-radius: 16px;

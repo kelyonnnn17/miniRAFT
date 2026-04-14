@@ -2,6 +2,10 @@
 
 Distributed real-time drawing board with a Mini-RAFT consensus cluster.
 
+This project is intentionally "UI-simple, distributed-systems-heavy": the browser canvas is just the input/output.
+The interesting part is that every stroke is replicated and committed via a RAFT-like consensus log, so all clients
+converge on the same state even during leader failover and replica restarts.
+
 ## Current Implementation Status
 
 - 3 replica services with RAFT-lite leader election and log replication
@@ -38,6 +42,10 @@ docker compose up --build
 http://localhost:3000
 ```
 
+The page contains:
+- a canvas (draw in multiple tabs)
+- a small **Cluster** panel showing leader/term/replica states (updates live)
+
 4. Replica status endpoints:
 
 - `http://localhost:5001/status`
@@ -47,6 +55,17 @@ http://localhost:3000
 5. Gateway status:
 
 - `http://localhost:8080/status`
+
+Tip: replicas expose RAFT state (`Leader`/`Follower`/`Candidate`) via their `/status` endpoints.
+
+## How It Works (high level)
+
+1. Browser sends strokes to the Gateway over WebSocket.
+2. Gateway forwards strokes to the current leader replica.
+3. Leader replicates the stroke log to followers and commits after quorum.
+4. Gateway broadcasts only *committed* entries to all connected clients.
+
+During failover, Gateway re-discovers the leader and retries, so the UI keeps working.
 
 ## Automated Verification
 
@@ -58,6 +77,17 @@ npm run test:integration
 
 This test spins up an isolated local cluster and validates leader election, follower reset catch-up,
 leader failover, gateway stroke broadcast, and convergence after restart.
+
+## Logs (failover evidence)
+
+Replicas and Gateway emit structured JSON logs to stdout.
+
+- Example captured logs: `logs/failover.example.log`
+- Follow logs live:
+
+```bash
+docker compose logs -f gateway replica1 replica2 replica3
+```
 
 ## Key Environment Variables
 
@@ -84,3 +114,4 @@ leader failover, gateway stroke broadcast, and convergence after restart.
 
 - `docs/architecture.md`
 - `docs/testing.md`
+- `docs/deliverables.md`

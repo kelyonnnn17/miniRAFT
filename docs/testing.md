@@ -26,6 +26,30 @@ The integration scenario validates:
 5. Restart a follower with cleared state and verify catch-up.
 6. Repeat with rapid restart sequence of two replicas (not all at once).
 
+## Capturing Logs (for submission)
+
+The replicas and gateway emit structured JSON logs to stdout.
+
+To capture logs while reproducing failover:
+
+1. Start the stack:
+
+```bash
+docker compose up --build
+```
+
+2. In another terminal, kill the current leader (you can identify it via `GET /status` on each replica):
+
+```bash
+docker compose kill replica1
+```
+
+3. Observe logs for leader election and step-down events:
+- Replica: `election_started`, `became_leader`, `step_down`
+- Gateway: continues broadcasting committed strokes; leader re-discovery occurs automatically
+
+Tip: `docker compose logs -f gateway replica1 replica2 replica3` is convenient for collecting these into a file.
+
 ## Useful Endpoints
 
 - Replica status: `GET /status`
