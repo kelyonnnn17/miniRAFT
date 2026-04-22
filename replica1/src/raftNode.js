@@ -456,4 +456,29 @@ export class RaftNode {
       commitIndex: this.commitIndex,
     };
   }
+
+  forceStepDownForElection() {
+    if (this.stopped) {
+      return { ok: false, reason: "stopped" };
+    }
+
+    if (this.state !== NodeState.LEADER) {
+      return {
+        ok: true,
+        triggered: false,
+        reason: "not_leader",
+        nodeId: this.nodeId,
+        state: this.state,
+      };
+    }
+
+    this.stepDown(this.currentTerm + 1, null);
+    return {
+      ok: true,
+      triggered: true,
+      nodeId: this.nodeId,
+      term: this.currentTerm,
+      state: this.state,
+    };
+  }
 }

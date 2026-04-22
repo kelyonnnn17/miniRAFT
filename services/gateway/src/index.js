@@ -155,6 +155,41 @@ async function getClusterStatus() {
   };
 }
 
+async function triggerLeaderElectionIfPossible() {
+  const cluster = await getClusterStatus();
+  const alive = (cluster.replicas || []).filter((replica) => replica.state !== "Unreachable");
+
+  if (alive.length <= 1) {
+    return { ok: true, triggered: false, reason: "single_node_remaining" };
+  }
+
+  const leaderAddr = cluster.leader || alive.find((replica) => replica.state === "Leader")?.address;
+  if (!leaderAddr) {
+    return { ok: false, triggered: false, reason: "leader_not_found" };
+  }
+
+  try {
+    const result = await fetchJson(`http://${leaderAddr}/admin/step-down`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ reason: "user_disconnect" }),
+    });
+
+    if (!result.ok) {
+      return { ok: false, triggered: false, reason: "step_down_failed" };
+    }
+
+    logEvent({
+      service: "gateway",
+      eventType: "leader_step_down_requested",
+      leader: leaderAddr,
+    });
+    return { ok: true, triggered: true, leader: leaderAddr };
+  } catch {
+    return { ok: false, triggered: false, reason: "leader_unreachable" };
+  }
+}
+
 app.get("/status", async (_req, res) => {
   const leader = await findLeader();
   res.json({
@@ -180,9 +215,46 @@ function broadcast(payload) {
   }
 }
 
-wss.on("connection", async (ws) => {
+function sanitizeName(raw) {
+  const trimmed = String(raw || "").trim();
+  if (!trimmed) {
+    return null;
+  }
+  return trimmed.slice(0, 24);
+}
+
+function currentUsers() {
+  const users = [];
+  for (const client of wss.clients) {
+    if (client.readyState === 1 && client.clientName) {
+      users.push(client.clientName);
+    }
+  }
+  return [...new Set(users)];
+}
+
+function broadcastUsers() {
+  broadcast({ type: "users", users: currentUsers() });
+}
+
+wss.on("connection", async (ws, req) => {
+  let initialName = null;
+  try {
+    const parsed = new URL(req.url || "/", "http://gateway.local");
+    initialName = sanitizeName(parsed.searchParams.get("name"));
+  } catch {
+    initialName = null;
+  }
+
+  ws.clientName = initialName;
+
   const existing = await getCommittedEntries();
   ws.send(JSON.stringify({ type: "snapshot", entries: existing }));
+  ws.send(JSON.stringify({ type: "users", users: currentUsers() }));
+  if (ws.clientName) {
+    ws.send(JSON.stringify({ type: "welcome", name: ws.clientName }));
+  }
+  broadcastUsers();
 
   let stopped = false;
   const sendCluster = async () => {
@@ -201,11 +273,35 @@ wss.on("connection", async (ws) => {
   ws.on("message", async (rawMessage) => {
     try {
       const message = JSON.parse(rawMessage.toString());
+      if (message.type === "introduce") {
+        const name = sanitizeName(message.name);
+        if (!name) {
+          ws.send(JSON.stringify({ type: "error", message: "name is required" }));
+          return;
+        }
+
+        ws.clientName = name;
+        ws.send(JSON.stringify({ type: "welcome", name }));
+        broadcastUsers();
+        return;
+      }
+
+      if (message.type === "disconnect") {
+        await triggerLeaderElectionIfPossible();
+        ws.close();
+        return;
+      }
+
       if (message.type !== "stroke") {
         return;
       }
 
-      const result = await sendStrokeToLeader(message.stroke);
+      const stroke = {
+        ...(message.stroke || {}),
+        user: ws.clientName || sanitizeName(message.stroke?.user) || "Guest",
+      };
+
+      const result = await sendStrokeToLeader(stroke);
       if (result.ok && result.entry?.committed) {
         broadcast({ type: "stroke", entry: result.entry });
         logEvent({
@@ -223,11 +319,13 @@ wss.on("connection", async (ws) => {
   ws.on("close", () => {
     stopped = true;
     clearInterval(clusterTimer);
+    broadcastUsers();
   });
 
   ws.on("error", () => {
     stopped = true;
     clearInterval(clusterTimer);
+    broadcastUsers();
   });
 });
 

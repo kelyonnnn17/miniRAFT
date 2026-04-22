@@ -73,6 +73,11 @@ app.get("/client/committed-log", (_req, res) => {
   });
 });
 
+app.post("/admin/step-down", (_req, res) => {
+  const result = node.forceStepDownForElection();
+  return res.json(result);
+});
+
 const server = app.listen(PORT, () => {
   console.log(`Replica ${NODE_ID} listening on ${PORT}`);
 });

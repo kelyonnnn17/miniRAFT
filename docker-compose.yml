@@ -9,6 +9,7 @@ services:
       ADVERTISE_ADDR: replica1:5001
       PEERS: replica2:5002,replica3:5003
       DATA_DIR: /data
+      RESET_STATE_ON_START: "1"
     ports:
       - "5001:5001"
     volumes:
@@ -33,6 +34,7 @@ services:
       ADVERTISE_ADDR: replica2:5002
       PEERS: replica1:5001,replica3:5003
       DATA_DIR: /data
+      RESET_STATE_ON_START: "1"
     ports:
       - "5002:5002"
     volumes:
@@ -57,6 +59,7 @@ services:
       ADVERTISE_ADDR: replica3:5003
       PEERS: replica1:5001,replica2:5002
       DATA_DIR: /data
+      RESET_STATE_ON_START: "1"
     ports:
       - "5003:5003"
     volumes:

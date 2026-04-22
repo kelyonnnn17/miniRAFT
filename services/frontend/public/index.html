@@ -26,6 +26,14 @@
         <p id="statusBadge" class="status connecting">Connecting...</p>
       </header>
 
+      <section class="identity" aria-label="User identity">
+        <label for="nameInput">Your Name</label>
+        <input id="nameInput" type="text" maxlength="24" placeholder="Enter your name" />
+        <button id="connectBtn" class="connect-btn" type="button">Connect</button>
+        <button id="disconnectBtn" class="disconnect-btn" type="button" disabled>Disconnect</button>
+        <p id="selfName" class="self-name">Not connected</p>
+      </section>
+
       <section class="toolbar" aria-label="Drawing controls">
         <label class="control">
           <span>Color</span>
@@ -41,7 +49,7 @@
 
       <section class="cluster" aria-label="Cluster status">
         <div class="cluster-head">
-          <strong>Cluster Telemetry</strong>
+          <strong>Cluster Telemetry (User-Labeled Nodes)</strong>
           <span id="clusterSummary">Waiting for cluster status...</span>
         </div>
 
@@ -50,6 +58,14 @@
         <p class="hint">
           Flow: client stroke -> gateway -> leader append -> follower replication -> quorum commit -> broadcast.
         </p>
+      </section>
+
+      <section class="users" aria-label="Connected users">
+        <div class="cluster-head">
+          <strong>Connected Users</strong>
+          <span id="usersSummary">0 active</span>
+        </div>
+        <ul id="userList" class="user-list"></ul>
       </section>
 
       <section class="board-shell">
