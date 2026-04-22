@@ -35,20 +35,7 @@ export class RaftNode {
     this.nextIndex = {};
     this.matchIndex = {};
     this.catchUpInFlight = false;
-    this.stopped = false;
     this.resetElectionTimer();
-  }
-
-  stop() {
-    this.stopped = true;
-    if (this.electionTimer) {
-      clearTimeout(this.electionTimer);
-      this.electionTimer = null;
-    }
-    if (this.heartbeatTimer) {
-      clearInterval(this.heartbeatTimer);
-      this.heartbeatTimer = null;
-    }
   }
 
   status() {
@@ -87,18 +74,12 @@ export class RaftNode {
   }
 
   resetElectionTimer() {
-    if (this.stopped) {
-      return;
-    }
     if (this.electionTimer) {
       clearTimeout(this.electionTimer);
     }
 
     const timeout = randBetween(ELECTION_MIN_MS, ELECTION_MAX_MS);
     this.electionTimer = setTimeout(() => {
-      if (this.stopped) {
-        return;
-      }
       if (this.state !== NodeState.LEADER) {
         this.startElection().catch((err) => {
           this.logInfo("election_error", { message: err.message });
@@ -123,9 +104,6 @@ export class RaftNode {
   }
 
   async startElection() {
-    if (this.stopped) {
-      return;
-    }
     this.state = NodeState.CANDIDATE;
     this.currentTerm += 1;
     this.votedFor = this.nodeId;
@@ -179,9 +157,6 @@ export class RaftNode {
   }
 
   becomeLeader() {
-    if (this.stopped) {
-      return;
-    }
     this.state = NodeState.LEADER;
     this.leaderId = this.nodeId;
     this.leaderAddress = this.advertiseAddress;
@@ -203,9 +178,6 @@ export class RaftNode {
   }
 
   async sendHeartbeats() {
-    if (this.stopped) {
-      return;
-    }
     if (this.state !== NodeState.LEADER) {
       return;
     }
@@ -320,9 +292,10 @@ export class RaftNode {
   }
 
   async appendClientStroke(stroke) {
-    if (this.stopped) {
-      return { ok: false, reason: "stopped" };
-    }
+    return this.appendClientOperation(stroke);
+  }
+
+  async appendClientOperation(operation) {
     if (this.state !== NodeState.LEADER) {
       return { ok: false, reason: "not_leader", leaderId: this.leaderId };
     }
@@ -330,7 +303,7 @@ export class RaftNode {
     const entry = {
       index: this.log.length,
       term: this.currentTerm,
-      stroke,
+      operation,
       committed: false,
     };
 
@@ -363,7 +336,7 @@ export class RaftNode {
 
   async replicateToPeer(peer) {
     let attempts = 0;
-    while (attempts < 5 && this.state === NodeState.LEADER && !this.stopped) {
+    while (attempts < 5 && this.state === NodeState.LEADER) {
       attempts += 1;
       const nextIndex = this.nextIndex[peer] ?? this.log.length;
       const prevLogIndex = nextIndex - 1;
@@ -407,9 +380,6 @@ export class RaftNode {
   }
 
   requestCatchUpFromLeader() {
-    if (this.stopped) {
-      return;
-    }
     if (this.catchUpInFlight || !this.leaderAddress || this.state !== NodeState.FOLLOWER) {
       return;
     }

@@ -2,15 +2,12 @@
 
 Distributed real-time drawing board with a Mini-RAFT consensus cluster.
 
-This project is intentionally "UI-simple, distributed-systems-heavy": the browser canvas is just the input/output.
-The interesting part is that every stroke is replicated and committed via a RAFT-like consensus log, so all clients
-converge on the same state even during leader failover and replica restarts.
-
 ## Current Implementation Status
 
 - 3 replica services with RAFT-lite leader election and log replication
 - Gateway service with WebSocket client fanout and leader forwarding
-- Frontend canvas client rendering snapshots and committed strokes
+- Frontend canvas client rendering snapshots and committed drawing operations
+- Drawing tools for pen, eraser, brush sizing, color selection, and shared clear-board resets
 - Docker Compose setup for 1 gateway + 3 replicas + 1 frontend
 - Follower catch-up path using `/sync-log` on restart or log mismatch
 - Integration test covering election, failover, catch-up, and gateway broadcast
@@ -42,30 +39,33 @@ docker compose up --build
 http://localhost:3000
 ```
 
-The page contains:
-- a canvas (draw in multiple tabs)
-- a small **Cluster** panel showing leader/term/replica states (updates live)
+4. Authenticate through the browser form with a user name and board id, then draw on the canvas.
 
-4. Replica status endpoints:
+The browser uses `POST /auth/token` to get a short-lived token, then opens the WebSocket with `?token=...`.
+
+Once authenticated, use the toolbar above the board to switch between pen and eraser, change ink color, adjust brush size, or clear the board for everyone.
+
+5. For manual API usage, request a token from:
+
+```text
+POST http://localhost:8080/auth/token
+```
+
+Body example:
+
+```json
+{ "userId": "alice", "boardId": "default", "role": "editor" }
+```
+
+6. Replica status endpoints:
 
 - `http://localhost:5001/status`
 - `http://localhost:5002/status`
 - `http://localhost:5003/status`
 
-5. Gateway status:
+7. Gateway status:
 
 - `http://localhost:8080/status`
-
-Tip: replicas expose RAFT state (`Leader`/`Follower`/`Candidate`) via their `/status` endpoints.
-
-## How It Works (high level)
-
-1. Browser sends strokes to the Gateway over WebSocket.
-2. Gateway forwards strokes to the current leader replica.
-3. Leader replicates the stroke log to followers and commits after quorum.
-4. Gateway broadcasts only *committed* entries to all connected clients.
-
-During failover, Gateway re-discovers the leader and retries, so the UI keeps working.
 
 ## Automated Verification
 
@@ -76,18 +76,7 @@ npm run test:integration
 ```
 
 This test spins up an isolated local cluster and validates leader election, follower reset catch-up,
-leader failover, gateway stroke broadcast, and convergence after restart.
-
-## Logs (failover evidence)
-
-Replicas and Gateway emit structured JSON logs to stdout.
-
-- Example captured logs: `logs/failover.example.log`
-- Follow logs live:
-
-```bash
-docker compose logs -f gateway replica1 replica2 replica3
-```
+leader failover, gateway drawing broadcast, and convergence after restart.
 
 ## Key Environment Variables
 
@@ -102,6 +91,10 @@ docker compose logs -f gateway replica1 replica2 replica3
 - Gateway:
 	- `PORT`
 	- `REPLICAS`
+	- `MINIRAFT_AUTH_SECRET`
+	- `MINIRAFT_TOKEN_TTL_SECONDS`
+	- `MINIRAFT_RATE_LIMIT_MAX_REQUESTS`
+	- `MINIRAFT_RATE_LIMIT_WINDOW_MS`
 
 ## Notes
 
@@ -110,8 +103,11 @@ docker compose logs -f gateway replica1 replica2 replica3
 - Replica state is persisted to Docker volumes (`/data/state.json`).
 - `/sync-log` endpoint is used by followers for restarted-node catch-up.
 
+## User Guide
+
+See [docs/user-guide.md](docs/user-guide.md) for a step-by-step walkthrough of login, drawing tools, and board sharing.
+
 ## Documentation
 
 - `docs/architecture.md`
 - `docs/testing.md`
-- `docs/deliverables.md`

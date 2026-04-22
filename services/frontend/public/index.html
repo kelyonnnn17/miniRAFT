@@ -4,56 +4,71 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>MiniRAFT Board</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap"
-      rel="stylesheet"
-    />
     <link rel="stylesheet" href="/styles.css" />
   </head>
   <body>
-    <div class="page-glow" aria-hidden="true"></div>
-    <main class="app">
-      <header class="hero">
-        <div class="hero-copy">
-          <p class="eyebrow">Distributed Systems Demo</p>
-          <h1>MiniRAFT Drawing Board</h1>
-          <p class="subtitle">
-            Real-time strokes routed through Gateway and committed by quorum before broadcast.
-          </p>
+    <main class="shell">
+      <section class="hero">
+        <div>
+          <p class="eyebrow">Collaborative sketch board</p>
+          <h1>MiniRAFT</h1>
+          <p class="lede">Sign in, pick a board, and draw together with live replicated strokes, monochrome shades, erasing, and instant clearing.</p>
         </div>
-        <p id="statusBadge" class="status connecting">Connecting...</p>
-      </header>
-
-      <section class="toolbar" aria-label="Drawing controls">
-        <label class="control">
-          <span>Color</span>
-          <input id="colorPicker" type="color" value="#0f172a" />
-        </label>
-        <label class="control grow">
-          <span>Brush Width</span>
-          <input id="sizeSlider" type="range" min="1" max="14" step="1" value="3" />
-          <output id="sizeValue">3 px</output>
-        </label>
-        <button id="clearLocalBtn" class="clear-btn" type="button">Clear Local Canvas</button>
+        <div class="status-card">
+          <span class="status-label">Connection</span>
+          <p id="status">Connecting...</p>
+        </div>
       </section>
 
-      <section class="cluster" aria-label="Cluster status">
-        <div class="cluster-head">
-          <strong>Cluster Telemetry</strong>
-          <span id="clusterSummary">Waiting for cluster status...</span>
+      <section class="auth-card" id="auth-form-wrap">
+        <div class="auth-copy">
+          <p class="eyebrow">Get started</p>
+          <h2>Enter a board in one step</h2>
+          <p>Use any user name, pick a board ID, and the gateway will issue a session token for drawing.</p>
         </div>
-
-        <div id="replicaCards" class="replica-cards"></div>
-
-        <p class="hint">
-          Flow: client stroke -> gateway -> leader append -> follower replication -> quorum commit -> broadcast.
-        </p>
+        <form id="auth-form" class="auth-form">
+          <label>
+            User ID
+            <input id="user-id" name="userId" placeholder="alice" autocomplete="nickname" required />
+          </label>
+          <label>
+            Board ID
+            <input id="board-id" name="boardId" placeholder="default" autocomplete="off" />
+          </label>
+          <button type="submit">Enter board</button>
+          <p class="error" id="auth-error" aria-live="polite"></p>
+        </form>
       </section>
 
-      <section class="board-shell">
-        <canvas id="board" width="1200" height="700"></canvas>
+      <section class="canvas-wrap">
+        <div id="board-panel" hidden>
+          <div class="board-toolbar" aria-label="Drawing tools">
+            <div class="toolbar-group">
+              <span class="toolbar-label">Mode</span>
+              <button type="button" class="tool-button active" data-tool="pen">Pen</button>
+              <button type="button" class="tool-button" data-tool="eraser">Eraser</button>
+            </div>
+            <div class="toolbar-group color-group">
+              <span class="toolbar-label">Color</span>
+              <button type="button" class="color-swatch active" data-color="#111111" style="--swatch:#111111" aria-label="Black"></button>
+              <button type="button" class="color-swatch" data-color="#444444" style="--swatch:#444444" aria-label="Charcoal"></button>
+              <button type="button" class="color-swatch" data-color="#777777" style="--swatch:#777777" aria-label="Gray"></button>
+              <button type="button" class="color-swatch" data-color="#b5b5b5" style="--swatch:#b5b5b5" aria-label="Silver"></button>
+              <button type="button" class="color-swatch" data-color="#ffffff" style="--swatch:#ffffff" aria-label="White"></button>
+            </div>
+            <label class="color-picker-wrap">
+              <span class="toolbar-label">Hue</span>
+              <input id="custom-color" type="color" value="#111111" aria-label="Choose custom color" />
+            </label>
+            <label class="range-group">
+              <span class="toolbar-label">Brush <strong id="brush-value">3</strong> px</span>
+              <input id="brush-size" type="range" min="1" max="28" value="3" />
+            </label>
+            <button type="button" id="clear-board" class="clear-button">Clear board</button>
+          </div>
+          <p class="hint">Pen and eraser strokes are replicated. Clear board publishes a shared reset for everyone on the board.</p>
+          <canvas id="board" width="1200" height="700"></canvas>
+        </div>
       </section>
     </main>
     <script src="/main.js"></script>
