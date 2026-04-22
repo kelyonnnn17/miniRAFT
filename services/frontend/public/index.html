@@ -4,30 +4,55 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>MiniRAFT Board</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
     <link rel="stylesheet" href="/styles.css" />
   </head>
   <body>
-    <main class="shell">
-      <header class="topbar">
-        <div>
-          <h1>MiniRAFT</h1>
-          <p class="subtitle">Distributed drawing board backed by a RAFT-like stroke log</p>
+    <div class="page-glow" aria-hidden="true"></div>
+    <main class="app">
+      <header class="hero">
+        <div class="hero-copy">
+          <p class="eyebrow">Distributed Systems Demo</p>
+          <h1>MiniRAFT Drawing Board</h1>
+          <p class="subtitle">
+            Real-time strokes routed through Gateway and committed by quorum before broadcast.
+          </p>
         </div>
-        <p id="status">Connecting...</p>
+        <p id="statusBadge" class="status connecting">Connecting...</p>
       </header>
 
-      <section class="info" aria-label="Cluster status">
-        <div class="info-row">
-          <strong>Cluster</strong>
-          <span id="clusterSummary">Waiting for cluster status…</span>
+      <section class="toolbar" aria-label="Drawing controls">
+        <label class="control">
+          <span>Color</span>
+          <input id="colorPicker" type="color" value="#0f172a" />
+        </label>
+        <label class="control grow">
+          <span>Brush Width</span>
+          <input id="sizeSlider" type="range" min="1" max="14" step="1" value="3" />
+          <output id="sizeValue">3 px</output>
+        </label>
+        <button id="clearLocalBtn" class="clear-btn" type="button">Clear Local Canvas</button>
+      </section>
+
+      <section class="cluster" aria-label="Cluster status">
+        <div class="cluster-head">
+          <strong>Cluster Telemetry</strong>
+          <span id="clusterSummary">Waiting for cluster status...</span>
         </div>
-        <ul id="replicaList" class="replica-list"></ul>
+
+        <div id="replicaCards" class="replica-cards"></div>
+
         <p class="hint">
-          How it works: your strokes go to the Gateway → current Leader → committed via quorum → broadcast to all clients.
+          Flow: client stroke -> gateway -> leader append -> follower replication -> quorum commit -> broadcast.
         </p>
       </section>
 
-      <section class="canvas-wrap">
+      <section class="board-shell">
         <canvas id="board" width="1200" height="700"></canvas>
       </section>
     </main>

@@ -1,11 +1,17 @@
 const canvas = document.getElementById("board");
 const ctx = canvas.getContext("2d");
-const statusEl = document.getElementById("status");
+const statusEl = document.getElementById("statusBadge");
 const clusterSummaryEl = document.getElementById("clusterSummary");
-const replicaListEl = document.getElementById("replicaList");
+const replicaCardsEl = document.getElementById("replicaCards");
+const colorPicker = document.getElementById("colorPicker");
+const sizeSlider = document.getElementById("sizeSlider");
+const sizeValue = document.getElementById("sizeValue");
+const clearLocalBtn = document.getElementById("clearLocalBtn");
 
 let drawing = false;
 let lastPoint = null;
+let brushColor = colorPicker.value;
+let brushWidth = Number(sizeSlider.value);
 
 function drawStroke(stroke) {
   ctx.strokeStyle = stroke.color || "#111827";
@@ -15,6 +21,59 @@ function drawStroke(stroke) {
   ctx.moveTo(stroke.from.x, stroke.from.y);
   ctx.lineTo(stroke.to.x, stroke.to.y);
   ctx.stroke();
+}
+
+function setStatus(text, cls) {
+  statusEl.textContent = text;
+  statusEl.classList.remove("connected", "connecting", "disconnected");
+  statusEl.classList.add(cls);
+}
+
+function getBoardPoint(event) {
+  const rect = canvas.getBoundingClientRect();
+  const x = ((event.clientX - rect.left) / rect.width) * canvas.width;
+  const y = ((event.clientY - rect.top) / rect.height) * canvas.height;
+  return { x, y };
+}
+
+function formatStateClass(state) {
+  const value = (state || "").toLowerCase();
+  if (value.includes("leader")) return "state-leader";
+  if (value.includes("candidate")) return "state-candidate";
+  if (value.includes("unreachable")) return "state-unreachable";
+  return "state-follower";
+}
+
+function renderReplicaCards(replicas) {
+  replicaCardsEl.innerHTML = "";
+
+  for (const replica of replicas) {
+    const card = document.createElement("article");
+    card.className = "replica-card";
+
+    const title = document.createElement("h3");
+    title.textContent = `${replica.nodeId || "unknown node"} @ ${replica.address || "?"}`;
+
+    const meta = document.createElement("ul");
+    meta.className = "replica-meta";
+
+    const stateItem = document.createElement("li");
+    stateItem.className = formatStateClass(replica.state);
+    stateItem.textContent = `state=${replica.state || "?"}`;
+
+    const termItem = document.createElement("li");
+    termItem.textContent = `term=${replica.currentTerm ?? "?"}`;
+
+    const commitItem = document.createElement("li");
+    commitItem.textContent = `commit=${replica.commitIndex ?? "?"}`;
+
+    const logItem = document.createElement("li");
+    logItem.textContent = `logLength=${replica.logLength ?? "?"}`;
+
+    meta.append(stateItem, termItem, commitItem, logItem);
+    card.append(title, meta);
+    replicaCardsEl.appendChild(card);
+  }
 }
 
 function wsUrl() {
@@ -27,11 +86,15 @@ function wsUrl() {
 const socket = new WebSocket(wsUrl());
 
 socket.addEventListener("open", () => {
-  statusEl.textContent = "Connected";
+  setStatus("Connected", "connected");
 });
 
 socket.addEventListener("close", () => {
-  statusEl.textContent = "Disconnected";
+  setStatus("Disconnected - retry by refreshing if needed", "disconnected");
+});
+
+socket.addEventListener("error", () => {
+  setStatus("Connection Error", "disconnected");
 });
 
 socket.addEventListener("message", (event) => {
@@ -50,13 +113,7 @@ socket.addEventListener("message", (event) => {
 
     const leaderLabel = leaderNodeId ? `${leaderNodeId} (${leader || "unknown"})` : leader || "unknown";
     clusterSummaryEl.textContent = `Leader: ${leaderLabel} · term: ${term ?? "?"}`;
-
-    replicaListEl.innerHTML = "";
-    for (const r of replicas) {
-      const li = document.createElement("li");
-      li.textContent = `${r.nodeId || "?"} @ ${r.address || "?"} — ${r.state || "?"} (term ${r.currentTerm ?? "?"}, commit ${r.commitIndex ?? "?"}, log ${r.logLength ?? "?"})`;
-      replicaListEl.appendChild(li);
-    }
+    renderReplicaCards(replicas);
   }
   if (payload.type === "stroke" && payload.entry?.stroke) {
     drawStroke(payload.entry.stroke);
@@ -64,21 +121,27 @@ socket.addEventListener("message", (event) => {
 });
 
 canvas.addEventListener("pointerdown", (event) => {
+  if (event.button !== 0) {
+    return;
+  }
+  canvas.setPointerCapture(event.pointerId);
   drawing = true;
-  lastPoint = { x: event.offsetX, y: event.offsetY };
+  lastPoint = getBoardPoint(event);
 });
 
 canvas.addEventListener("pointermove", (event) => {
   if (!drawing || !lastPoint) return;
-  const nextPoint = { x: event.offsetX, y: event.offsetY };
+  const nextPoint = getBoardPoint(event);
   const stroke = {
     from: lastPoint,
     to: nextPoint,
-    color: "#0f172a",
-    width: 3,
+    color: brushColor,
+    width: brushWidth,
   };
   drawStroke(stroke);
-  socket.send(JSON.stringify({ type: "stroke", stroke }));
+  if (socket.readyState === 1) {
+    socket.send(JSON.stringify({ type: "stroke", stroke }));
+  }
   lastPoint = nextPoint;
 });
 
@@ -86,3 +149,18 @@ window.addEventListener("pointerup", () => {
   drawing = false;
   lastPoint = null;
 });
+
+sizeSlider.addEventListener("input", () => {
+  brushWidth = Number(sizeSlider.value);
+  sizeValue.textContent = `${brushWidth} px`;
+});
+
+colorPicker.addEventListener("input", () => {
+  brushColor = colorPicker.value;
+});
+
+clearLocalBtn.addEventListener("click", () => {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+});
+
+setStatus("Connecting...", "connecting");

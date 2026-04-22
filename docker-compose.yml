@@ -12,7 +12,7 @@ services:
     ports:
       - "5001:5001"
     volumes:
-      - ./services/replica/src:/app/services/replica/src
+      - ./replica1/src:/app/services/replica/src
       - ./shared/src:/app/shared/src
       - replica1-data:/data
     command: ["npm", "run", "dev", "-w", "@miniraft/replica"]
@@ -36,7 +36,7 @@ services:
     ports:
       - "5002:5002"
     volumes:
-      - ./services/replica/src:/app/services/replica/src
+      - ./replica2/src:/app/services/replica/src
       - ./shared/src:/app/shared/src
       - replica2-data:/data
     command: ["npm", "run", "dev", "-w", "@miniraft/replica"]
@@ -60,7 +60,7 @@ services:
     ports:
       - "5003:5003"
     volumes:
-      - ./services/replica/src:/app/services/replica/src
+      - ./replica3/src:/app/services/replica/src
       - ./shared/src:/app/shared/src
       - replica3-data:/data
     command: ["npm", "run", "dev", "-w", "@miniraft/replica"]
