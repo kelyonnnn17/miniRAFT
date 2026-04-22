@@ -1,0 +1,19 @@
+# Never send local deps into Docker build context
+node_modules
+**/node_modules
+
+# Logs
+npm-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# VCS
+.git
+
+# Local env / OS
+.DS_Store
+.env
+
+# Local data dirs (runtime)
+data
+**/data

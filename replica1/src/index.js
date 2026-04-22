@@ -46,13 +46,12 @@ app.post(RpcPaths.SYNC_LOG, (req, res) => {
 });
 
 app.post("/client/stroke", async (req, res) => {
-  const { operation, stroke } = req.body || {};
-  const drawingOperation = operation || stroke;
-  if (!drawingOperation) {
-    return res.status(400).json({ ok: false, error: "operation is required" });
+  const { stroke } = req.body || {};
+  if (!stroke) {
+    return res.status(400).json({ ok: false, error: "stroke is required" });
   }
 
-  const result = await node.appendClientOperation(drawingOperation);
+  const result = await node.appendClientStroke(stroke);
   if (!result.ok && result.reason === "not_leader") {
     return res.status(409).json(result);
   }

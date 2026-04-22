@@ -12,7 +12,7 @@ services:
     ports:
       - "5001:5001"
     volumes:
-      - ./services/replica/src:/app/services/replica/src
+      - ./replica1/src:/app/services/replica/src
       - ./shared/src:/app/shared/src
       - replica1-data:/data
     command: ["npm", "run", "dev", "-w", "@miniraft/replica"]
@@ -36,7 +36,7 @@ services:
     ports:
       - "5002:5002"
     volumes:
-      - ./services/replica/src:/app/services/replica/src
+      - ./replica2/src:/app/services/replica/src
       - ./shared/src:/app/shared/src
       - replica2-data:/data
     command: ["npm", "run", "dev", "-w", "@miniraft/replica"]
@@ -60,7 +60,7 @@ services:
     ports:
       - "5003:5003"
     volumes:
-      - ./services/replica/src:/app/services/replica/src
+      - ./replica3/src:/app/services/replica/src
       - ./shared/src:/app/shared/src
       - replica3-data:/data
     command: ["npm", "run", "dev", "-w", "@miniraft/replica"]
@@ -85,9 +85,12 @@ services:
       - ./shared/src:/app/shared/src
     command: ["npm", "run", "dev", "-w", "@miniraft/gateway"]
     depends_on:
-      - replica1
-      - replica2
-      - replica3
+      replica1:
+        condition: service_healthy
+      replica2:
+        condition: service_healthy
+      replica3:
+        condition: service_healthy
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://localhost:8080/health"]
@@ -108,7 +111,8 @@ services:
       - ./services/frontend/public:/app/services/frontend/public
     command: ["npm", "run", "dev", "-w", "@miniraft/frontend"]
     depends_on:
-      - gateway
+      gateway:
+        condition: service_healthy
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://localhost:3000"]

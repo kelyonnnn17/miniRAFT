@@ -1,0 +1,29 @@
+# Example failover/election logs
+# Captured from: `docker compose logs --no-color --tail 300 replica2 replica3`
+# Timestamp: 2026-04-14
+replica2-1  | {"at":"2026-04-14T07:32:56.231Z","service":"replica","nodeId":"replica-2","term":2,"state":"Candidate","commitIndex":248,"eventType":"election_started","majority":2}
+replica2-1  | {"at":"2026-04-14T07:32:56.366Z","service":"replica","nodeId":"replica-2","term":2,"state":"Follower","commitIndex":248,"eventType":"step_down","leaderId":"replica-1"}
+replica2-1  | {"at":"2026-04-14T07:34:07.814Z","service":"replica","nodeId":"replica-2","term":3,"state":"Candidate","commitIndex":248,"eventType":"election_started","majority":2}
+replica2-1  | {"at":"2026-04-14T07:34:08.611Z","service":"replica","nodeId":"replica-2","term":4,"state":"Follower","commitIndex":248,"eventType":"step_down","leaderId":null}
+replica2-1  | {"at":"2026-04-14T07:34:09.344Z","service":"replica","nodeId":"replica-2","term":5,"state":"Candidate","commitIndex":248,"eventType":"election_started","majority":2}
+replica2-1  | {"at":"2026-04-14T07:34:09.944Z","service":"replica","nodeId":"replica-2","term":6,"state":"Follower","commitIndex":248,"eventType":"step_down","leaderId":null}
+replica3-1  | {"at":"2026-04-14T07:32:56.291Z","service":"replica","nodeId":"replica-3","term":2,"state":"Follower","commitIndex":248,"eventType":"step_down","leaderId":null}
+replica3-1  | {"at":"2026-04-14T07:32:56.354Z","service":"replica","nodeId":"replica-3","term":2,"state":"Follower","commitIndex":248,"eventType":"step_down","leaderId":"replica-1"}
+replica2-1  | {"at":"2026-04-14T07:34:10.707Z","service":"replica","nodeId":"replica-2","term":7,"state":"Candidate","commitIndex":248,"eventType":"election_started","majority":2}
+replica2-1  | {"at":"2026-04-14T07:34:11.355Z","service":"replica","nodeId":"replica-2","term":8,"state":"Follower","commitIndex":248,"eventType":"step_down","leaderId":null}
+replica2-1  | {"at":"2026-04-14T07:34:12.061Z","service":"replica","nodeId":"replica-2","term":9,"state":"Candidate","commitIndex":248,"eventType":"election_started","majority":2}
+replica2-1  | {"at":"2026-04-14T07:34:12.692Z","service":"replica","nodeId":"replica-2","term":10,"state":"Follower","commitIndex":248,"eventType":"step_down","leaderId":null}
+replica3-1  | {"at":"2026-04-14T07:34:07.837Z","service":"replica","nodeId":"replica-3","term":3,"state":"Follower","commitIndex":248,"eventType":"step_down","leaderId":null}
+replica2-1  | {"at":"2026-04-14T07:34:13.562Z","service":"replica","nodeId":"replica-2","term":11,"state":"Candidate","commitIndex":248,"eventType":"election_started","majority":2}
+replica2-1  | {"at":"2026-04-14T07:34:14.327Z","service":"replica","nodeId":"replica-2","term":12,"state":"Follower","commitIndex":248,"eventType":"step_down","leaderId":null}
+replica3-1  | {"at":"2026-04-14T07:34:08.510Z","service":"replica","nodeId":"replica-3","term":4,"state":"Candidate","commitIndex":248,"eventType":"election_started","majority":2}
+replica3-1  | {"at":"2026-04-14T07:34:09.359Z","service":"replica","nodeId":"replica-3","term":5,"state":"Follower","commitIndex":248,"eventType":"step_down","leaderId":null}
+replica2-1  | {"at":"2026-04-14T07:34:14.956Z","service":"replica","nodeId":"replica-2","term":12,"state":"Follower","commitIndex":248,"eventType":"step_down","leaderId":"replica-3"}
+replica3-1  | {"at":"2026-04-14T07:34:09.925Z","service":"replica","nodeId":"replica-3","term":6,"state":"Candidate","commitIndex":248,"eventType":"election_started","majority":2}
+replica3-1  | {"at":"2026-04-14T07:34:10.722Z","service":"replica","nodeId":"replica-3","term":7,"state":"Follower","commitIndex":248,"eventType":"step_down","leaderId":null}
+replica3-1  | {"at":"2026-04-14T07:34:11.338Z","service":"replica","nodeId":"replica-3","term":8,"state":"Candidate","commitIndex":248,"eventType":"election_started","majority":2}
+replica3-1  | {"at":"2026-04-14T07:34:12.085Z","service":"replica","nodeId":"replica-3","term":9,"state":"Follower","commitIndex":248,"eventType":"step_down","leaderId":null}
+replica3-1  | {"at":"2026-04-14T07:34:12.682Z","service":"replica","nodeId":"replica-3","term":10,"state":"Candidate","commitIndex":248,"eventType":"election_started","majority":2}
+replica3-1  | {"at":"2026-04-14T07:34:13.569Z","service":"replica","nodeId":"replica-3","term":11,"state":"Follower","commitIndex":248,"eventType":"step_down","leaderId":null}
+replica3-1  | {"at":"2026-04-14T07:34:14.310Z","service":"replica","nodeId":"replica-3","term":12,"state":"Candidate","commitIndex":248,"eventType":"election_started","majority":2}
+replica3-1  | {"at":"2026-04-14T07:34:14.941Z","service":"replica","nodeId":"replica-3","term":12,"state":"Leader","commitIndex":248,"eventType":"became_leader"}
